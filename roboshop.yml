@@ -1,3 +1,4 @@
+###ansible-playbook -i localhost, -e "instances=['mongodb','catalogue','redis','user','cart','mysql','shipping','rabbitmq','payment','frontend']" roboshop.yml
 - name: create ec2 instances and r53 records
   hosts: all
   connection: local
@@ -6,10 +7,12 @@
     ami_id: ami-0220d79f3f480ecf5
     domain_name: bhanudevops.online
     env: dev
+    action: create
     insatnces:
     - mongodb
     - catalogue
   tasks:
+   ### CREATE ###
   - name: create ec2 instances
     amazon.aws.ec2_instance:
        instance_type: "t3.micro"
@@ -18,15 +21,17 @@
        name: "{{ item }}-{{ env }}"
        tags:
          project: roboshop
-         compenent: "{{ item }}"
+         component: "{{ item }}"
          Enivornment: "{{ env }}"
          name: "{{ item }}-{{ env }}"
     loop: "{{ instances }}"
     register: ec2_output
+    when: action == "create"
 
   - name: print the output
     ansible.builtin.debug:
        msg: "{{ ec2_output }}"
+    when: action == "create"   
 
   - name: create r53 records
     amazon.aws.route53:
@@ -36,8 +41,10 @@
       type: A
       ttl: 1
       value: "{{ item.instances[0].private_ip_address }}"
-      wait: true
+      wait: false
+      overwrite: true
     loop: "{{ ec2_output.results }}"
+    when: action == "create"
 
   - name: create r53 record for frontend
     amazon.aws.route53:
@@ -47,7 +54,7 @@
       type: A
       ttl: 1
       value: "{{ item.instances[0].public_ip_address }}"
-      wait: true
+      wait: false
       overwrite: true
     loop: "{{ ec2_output.results }}"
     when:  # and
