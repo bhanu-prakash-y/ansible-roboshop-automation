@@ -21,7 +21,7 @@
          compenent: "{{ item }}"
          Enivornment: "{{ env }}"
          name: "{{ item }}-{{ env }}"
-    loop: "{{ insatnces }}"
+    loop: "{{ instances }}"
     register: ec2_output
 
   - name: print the output
